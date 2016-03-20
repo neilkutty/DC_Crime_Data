@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(rgdal)\nlibrary(ggplot2)\nlibrary(maptools)\nlibrary(dplyr)\nlibrary(ggmap)\nlibrary(leaflet)\nlibrary(dplyr)\nlibrary(curl)\n\n# jsonlite\n## AUTOMATION OF DC Crime Last 30 Days Data\n########---------------------------------------------------------------------#>>>\nlibrary(jsonlite)\ndccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')\ndc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)\n\n## Get distinct Offenses for shiny input\noffenses <- distinct(select(dc_crime_json,OFFENSE))\nrow.names(offenses) <- offenses$OFFENSE\n\n##  Seperate and clean lat/long columns\nlibrary(tidyr)\ndc_crime_clean <- dc_crime_json %>% \n  separate(coordinates, into = c(\"X\", \"Y\"), sep = \",\") \n\ndc_crime_clean$X <- as.numeric(gsub(\"c\\\\(\",\"\",dc_crime_clean$X))\ndc_crime_clean$Y <- as.numeric(gsub(\"\\\\)\",\"\",dc_crime_clean$Y))\n\n########---------------------------------------------------------------------#>>>\n\n\n\nfunction(input, output, session) {\n\n\n  \n  points <- eventReactive(input$reset, {\n    \n    cbind(dc_crime_clean$X,dc_crime_clean$Y)\n    \n    }, ignoreNULL = FALSE)\n  \n  output$mymap <- renderLeaflet({\n    \n    leaflet() %>%\n      addProviderTiles(\"OpenStreetMap.Mapnik\",\n                       options = providerTileOptions(noWrap = TRUE)\n      ) %>%\n      addMarkers(data = points(),popup = paste0(\"<strong>Report Datetime: </strong>\",\n                                                dc_crime_json$REPORTDATETIME,\n                                                \"<br><strong>Offense: </strong>\", \n                                                dc_crime_json$OFFENSE, \n                                                \"<br><strong>method: </strong>\", \n                                                dc_crime_json$METHOD,\n                                                \"<br><strong>shift:</strong>\",\n                                                dc_crime_json$SHIFT,\n                                                \"<br><strong>blocksite address:</strong><br>\",\n                                                dc_crime_json$BLOCKSITEADDRESS\n                                                ),\n                 \n                 clusterOptions = markerClusterOptions()\n                   \n                 ) \n    \n  })\n \n  }",
+    "created" : 1458399695539.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "985745796",
+    "id" : "684ED227",
+    "lastKnownWriteTime" : 1458438341,
+    "last_content_update" : 1458438341072,
+    "path" : "~/Documents/project/DC_Crime_Data/server.R",
+    "project_path" : "server.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

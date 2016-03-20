@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(rgdal)\nlibrary(ggplot2)\nlibrary(maptools)\nlibrary(dplyr)\nlibrary(ggmap)\nlibrary(leaflet)\n#DC Crime Data\n\ncrimesdc <- read.csv(\"Crime_Incidents__Last_30_Days.csv\", header=TRUE)\ndcmap <- readShapeSpatial(\"district_of_columbia_highway.shp\")\n\n\nggplot() +  geom_point(data=crimesdc, aes(x=X, y=Y), color=\"red\")\n\ndc <- get_map(location=\"Washington D.C.\",zoom=12)\nggmap(dc)+geom_point(data=crimesdc,alpha=1/4,aes(x=X,y=Y,color=OFFENSE))+scale_color_discrete()\n\n# xml2\nlibrary(xml2)\n\n# jsonlite\n## AUTOMATION OF DC Crime Last 30 Days Data\n########---------------------------------------------------------------------#>>>\nlibrary(jsonlite)\ndccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')\ndc_crime_json <- dccrimejsonlite$features$properties\ndc_crime_json$BLOCKXCOORD <- dc_crime_json$BLOCKXCOORD/10000\ndc_crime_json$BLOCKYCOORD <- dc_crime_json$BLOCKYCOORD/10000\n\n########---------------------------------------------------------------------#>>>\n\n",
+    "created" : 1458077173305.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3056236694",
+    "id" : "2CFDED9",
+    "lastKnownWriteTime" : 1458347906,
+    "last_content_update" : 1458347906127,
+    "path" : "~/Documents/project/DC_Crime_Data/DC_Crime_Last_30_Days.R",
+    "project_path" : "DC_Crime_Last_30_Days.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

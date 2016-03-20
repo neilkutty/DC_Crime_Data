@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(rgdal)\nlibrary(ggplot2)\nlibrary(maptools)\nlibrary(dplyr)\nlibrary(ggmap)\nlibrary(leaflet)\nlibrary(dplyr)\nlibrary(jsonlite)\nlibrary(tidyr)\n\nfluidPage(\n  titlePanel(\"DC Crime - Last 30 Days\"),\n  helpText(\"Map Explorer for last 30 days DC Crime Dataset\"),\n  helpText(\"Data May be Delayed\"),\n  p(\n    class=\"text-muted\",\n    paste(\"data source:http://opendata.dc.gov/datasets\"),\n    br(),\n    a(\"GeoJSON API url\", href=\"http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson\"),\n    br()\n   ),\n  \n  p(\n    class=\"text-primary\",\n    a(\"author: neil kutty\", href=\"http:/twitter.com/neilkutty\"),\n    br(),\n    a(\"original ui and server code\", href=\"https://rstudio.github.io/leaflet/shiny.html\")\n  ),\n  \n  p(\n    class=\"text-info\",\n    paste(\"Click on cluster for zoom. Click on individual marker for additional detail popup.\")\n  ),\n\n  \n  leafletOutput(\"mymap\"),\n  br(),\n \n  \n  actionButton(\"reset\",\"Reset Map View\")\n  \n \n)",
+    "created" : 1458399694709.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2181986241",
+    "id" : "7CE57B8B",
+    "lastKnownWriteTime" : 1458438295,
+    "last_content_update" : 1458438295907,
+    "path" : "~/Documents/project/DC_Crime_Data/ui.R",
+    "project_path" : "ui.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
