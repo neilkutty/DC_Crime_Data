@@ -10,16 +10,21 @@ library(tidyr)
 
 fluidPage(
   titlePanel("DC Crime - Last 30 Days"),
-  helpText("Map Explorer for last 30 days DC Crime Dataset"),
+  h3("Map Explorer for last 30 days DC Crime Dataset"),
+  
   helpText("Data May be Delayed"),
   p(
-    class="text-muted",
-    paste("data source:http://opendata.dc.gov/datasets"),
+    class="text-info",
+    a("data source: http://opendata.dc.gov/datasets",href="http://opendata.dc.gov/datasets"),
     br(),
-    a("GeoJSON API url", href="http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson"),
+   paste("GeoJSON API url: http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson"),
     br()
    ),
-  
+  p(
+    class="text-muted",
+    paste("If disconnected from server, try reloading... map is in dev with new features to be added. \n suggestions and evolutions are welcome:"),
+    a("github",href="https://github.com/sampsonsimpson/DC_Crime_Data")
+  ),
   p(
     class="text-primary",
     a("author: neil kutty", href="http:/twitter.com/neilkutty"),
@@ -29,7 +34,7 @@ fluidPage(
   
   p(
     class="text-info",
-    paste("Click on cluster for zoom. Click on individual marker for additional detail popup.")
+    paste("Click on cluster or scroll for zoom. Click on individual marker for additional detail popup.")
   ),
 
   

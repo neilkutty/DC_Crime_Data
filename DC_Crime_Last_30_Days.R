@@ -29,3 +29,8 @@ dc_crime_json$BLOCKYCOORD <- dc_crime_json$BLOCKYCOORD/10000
 
 ########---------------------------------------------------------------------#>>>
 
+#perform summarisations and grouping
+#
+
+
+
