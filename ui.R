@@ -1,16 +1,10 @@
-library(rgdal)
-library(ggplot2)
-library(maptools)
-library(dplyr)
-library(ggmap)
+library(shiny)
+library(shinythemes)
 library(leaflet)
-library(dplyr)
-library(jsonlite)
-library(tidyr)
 
-fluidPage(
-  titlePanel("DC Crime - Last 30 Days"),
-  h3("Map Explorer for last 30 days DC Crime Dataset"),
+fluidPage(theme = shinytheme("cerulean"),
+  titlePanel("<in dev> DC Crime - Last 30 Days <in dev>"),
+  h3("<in dev> Map Explorer for last 30 days DC Crime Dataset <in dev>"),
   
   helpText("Data May be Delayed"),
   p(
@@ -40,7 +34,7 @@ fluidPage(
   
   leafletOutput("mymap"),
   br(),
- 
+  dataTableOutput("table"),
   
   actionButton("reset","Reset Map View")
   
