@@ -20,7 +20,9 @@ The dataset is available in downloadable or GeoJSON format. I'm going with JSON 
 
 
 ```{r cars}
-summary(cars)
+library(jsonlite)
+  ## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
+  dccrimejsonlite 
 ```
 
 ## Including Plots
