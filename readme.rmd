@@ -18,8 +18,25 @@ Wanting to keep this post lightweight, map-centric, and regionally relevant, I a
 
 The dataset is available in downloadable or GeoJSON format. I'm going with JSON so that the shiny app can be standalone without additional need for data management.  
 
+Several libraries are required for this project. use the `install.packages('packagename')` command to install the libraries/packages before attempting the code to load them below
 
-```{r cars}
+```{r libraries,eval=FALSE}
+
+library(rgdal)
+library(ggplot2)
+library(maptools)
+library(dplyr)
+library(ggmap)
+library(leaflet)
+library(dplyr)
+library(jsonlite)
+library(tidyr)
+library(curl)
+```
+
+Retrieval of the data is bit *chunky* at the moment, utilizing the ```jsonlite``` library and some cleanup code we create a usable dataset below: 
+
+```{r json,eval=FALSE}
 ## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
 dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
 ## use cbind() to access the list elements and create dataframe
@@ -48,12 +65,8 @@ crimedc_bydate <- summarise(bydate,
                             count=n())
 ```
 
-## Including Plots
+In the above, the data is retrieved using the ```fromJSON()``` function, and the columns are retrieved using the ```cbind()``` function. 
 
-You can also embed plots, for example:
+The latitude and longitude columns are cleaned using the ```separate()``` function from library ```tidyr``` and RegEx to remove erroneous characters from the columns.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+-- in dev... 
