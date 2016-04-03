@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Getting the data
+## Getting and cleaning the data
 For my first blog post in a *long* time, I thought I would write a how-to on creating a simple leaflet map in R with with open data from opendata.dc.gov
 
 Finding open data that is updated, recent, and easily accessible on the web has become easier with the recent strides in making data more accessible to everyone (see: opportunity.census.gov) and developers in particular (see: catalog.data.gov).  
@@ -41,10 +41,6 @@ Retrieval of the data is bit *chunky* at the moment, utilizing the ```jsonlite``
 dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
 ## use cbind() to access the list elements and create dataframe
 dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
-
-## Get distinct Offenses for shiny input
-offenses <- distinct(select(dc_crime_json,OFFENSE))
-row.names(offenses) <- offenses$OFFENSE
 
 ## Seperate and clean lat/long columns
 ## --also separate REPORTDATETIME column
