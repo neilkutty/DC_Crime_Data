@@ -9,11 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Getting the data
+For my first blog post in a *long* time, I thought I would write a how-to on creating a simple leaflet map in R with with open data from opendata.dc.gov
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Finding open data that is updated, recent, and easily accessible on the web has become easier with the recent strides in making data more accessible to everyone (see: opportunity.census.gov) and developers in particular (see: catalog.data.gov).  
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Wanting to keep this post lightweight, map-centric, and regionally relevant, I am using a local dataset for the last 30 days of crime in Washington, D.C.
+
+The dataset is available in downloadable or GeoJSON format. I'm going with JSON so that the shiny app can be standalone without additional need for data management.  
+
 
 ```{r cars}
 summary(cars)
