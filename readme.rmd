@@ -56,6 +56,7 @@ In the above, the data is retrieved using the ```fromJSON()``` function, and the
 
 The latitude and longitude columns are cleaned using the ```separate()``` function from library ```tidyr``` and RegEx to remove erroneous characters from the columns.
 
+###ui.R 
 ```{r ui, eval=FALSE}
 library(shiny)
 library(shinythemes)
@@ -99,6 +100,7 @@ fluidPage(theme = shinytheme("cerulean"),
 )
 ```
 
+###server.R
 ```{r server.R file, eval=FALSE}
 
 library(rgdal)
