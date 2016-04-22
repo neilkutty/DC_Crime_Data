@@ -111,8 +111,13 @@ $(document).ready(function () {
 </div>
 
 
-<div id="creating-a-simple-interactive-map-with-r-leaflet-and-shiny" class="section level1">
-<h1>Creating a Simple Interactive Map with R, Leaflet, and Shiny</h1>
+<div id="creating-a-simple-interactive-map-with-r-leaflet-and-shiny" class="section level2">
+<h2>Creating a Simple Interactive Map with R, Leaflet, and Shiny</h2>
+<div id="data-dc-crime---last-30-days" class="section level4">
+<h4>data: DC Crime - Last 30 Days</h4>
+<p>deployed map: (<a href="https://kuttyman.shinyapps.io/CrimeDCLast30Days/" class="uri">https://kuttyman.shinyapps.io/CrimeDCLast30Days/</a>)</p>
+</div>
+</div>
 <div id="getting-and-cleaning-the-data" class="section level2">
 <h2>Getting and cleaning the data</h2>
 <p>The dataset is available in downloadable or GeoJSON format. I’m going with JSON so that the shiny app can be standalone without additional need for data management.</p>
@@ -152,6 +157,8 @@ crimedc_bydate &lt;- summarise(bydate,
                             count=n())</code></pre>
 <p>In the above, the data is retrieved using the <code>fromJSON()</code> function, and the columns are retrieved using the <code>cbind()</code> function.</p>
 <p>The latitude and longitude columns are cleaned using the <code>separate()</code> function from library <code>tidyr</code> and RegEx to remove erroneous characters from the columns.</p>
+<div id="ui.r" class="section level3">
+<h3>ui.R</h3>
 <pre class="r"><code>library(shiny)
 library(shinythemes)
 library(leaflet)
@@ -192,6 +199,9 @@ fluidPage(theme = shinytheme(&quot;cerulean&quot;),
   
  
 )</code></pre>
+</div>
+<div id="server.r" class="section level3">
+<h3>server.R</h3>
 <pre class="r"><code>library(rgdal)
 library(ggplot2)
 library(maptools)

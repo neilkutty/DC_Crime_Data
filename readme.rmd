@@ -1,9 +1,8 @@
 
-#Creating a Simple Interactive Map with R, Leaflet, and Shiny
+##Creating a Simple Interactive Map with R, Leaflet, and Shiny
+####data: DC Crime - Last 30 Days
+deployed map: (https://kuttyman.shinyapps.io/CrimeDCLast30Days/)
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ## Getting and cleaning the data
 
@@ -25,7 +24,7 @@ library(tidyr)
 library(curl)
 ```
 
-Retrieval of the data is bit *chunky* at the moment, utilizing the ```jsonlite``` library and some cleanup code we create a usable dataset below: 
+Utilizing the ```jsonlite``` library and some cleanup code we create a usable dataset below: 
 
 ```{r json,eval=FALSE}
 ## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
