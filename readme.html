@@ -117,9 +117,6 @@ $(document).ready(function () {
 
 <div id="getting-and-cleaning-the-data" class="section level2">
 <h2>Getting and cleaning the data</h2>
-<p>For my first blog post in a <em>long</em> time, I thought I would write a how-to on creating a simple leaflet map in R with with open data from opendata.dc.gov</p>
-<p>Finding open data that is updated, recent, and easily accessible on the web has become easier with the recent strides in making data more accessible to everyone (see: opportunity.census.gov) and developers in particular (see: catalog.data.gov).</p>
-<p>Wanting to keep this post lightweight, map-centric, and regionally relevant, I am using a local dataset for the last 30 days of crime in Washington, D.C.</p>
 <p>The dataset is available in downloadable or GeoJSON format. I’m going with JSON so that the shiny app can be standalone without additional need for data management.</p>
 <p>Several libraries are required for this project. use the <code>install.packages('packagename')</code> command to install the libraries/packages before attempting the code to load them below</p>
 <pre class="r"><code>library(rgdal)
@@ -134,6 +131,81 @@ library(tidyr)
 library(curl)</code></pre>
 <p>Retrieval of the data is bit <em>chunky</em> at the moment, utilizing the <code>jsonlite</code> library and some cleanup code we create a usable dataset below:</p>
 <pre class="r"><code>## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
+dccrimejsonlite &lt;- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
+## use cbind() to access the list elements and create dataframe
+dc_crime_json &lt;- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
+
+## Seperate and clean lat/long columns
+## --also separate REPORTDATETIME column
+dc_crime_clean &lt;- dc_crime_json %&gt;% 
+  separate(coordinates, into = c(&quot;X&quot;, &quot;Y&quot;), sep = &quot;,&quot;)%&gt;%
+  separate(REPORTDATETIME, into = c(&quot;Date&quot;,&quot;Time&quot;), sep=&quot;T&quot;)
+
+## convert lat and long columns to numbers and remove non numeric characters
+dc_crime_clean$X &lt;- as.numeric(gsub(&quot;c\\(&quot;,&quot;&quot;,dc_crime_clean$X))
+dc_crime_clean$Y &lt;- as.numeric(gsub(&quot;\\)&quot;,&quot;&quot;,dc_crime_clean$Y))
+
+#Create date column from datetime
+
+dc_crime_clean$DateClean &lt;- as.Date(dc_crime_clean$Date)
+
+bydate &lt;- group_by(dc_crime_clean,DateClean,OFFENSE,SHIFT)
+crimedc_bydate &lt;- summarise(bydate,
+                            count=n())</code></pre>
+<p>In the above, the data is retrieved using the <code>fromJSON()</code> function, and the columns are retrieved using the <code>cbind()</code> function.</p>
+<p>The latitude and longitude columns are cleaned using the <code>separate()</code> function from library <code>tidyr</code> and RegEx to remove erroneous characters from the columns.</p>
+<pre class="r"><code>library(shiny)
+library(shinythemes)
+library(leaflet)
+
+fluidPage(theme = shinytheme(&quot;cerulean&quot;),
+  titlePanel(&quot;&lt;in dev&gt; DC Crime - Last 30 Days &lt;in dev&gt;&quot;),
+  h3(&quot;&lt;in dev&gt; Map Explorer for last 30 days DC Crime Dataset &lt;in dev&gt;&quot;),
+  
+  helpText(&quot;Data May be Delayed&quot;),
+  p(
+    class=&quot;text-info&quot;,
+    a(&quot;data source: http://opendata.dc.gov/datasets&quot;,href=&quot;http://opendata.dc.gov/datasets&quot;),
+    br(),
+   paste(&quot;GeoJSON API url: http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson&quot;),
+    br()
+   ),
+  p(
+    class=&quot;text-muted&quot;,
+    paste(&quot;If disconnected from server, try reloading... map is in dev with new features to be added. \n suggestions and evolutions are welcome:&quot;),
+    a(&quot;github&quot;,href=&quot;https://github.com/sampsonsimpson/DC_Crime_Data&quot;)
+  ),
+  p(
+    class=&quot;text-primary&quot;,
+    a(&quot;author: neil kutty&quot;, href=&quot;http:/twitter.com/neilkutty&quot;),
+    br(),
+    a(&quot;original ui and server code&quot;, href=&quot;https://rstudio.github.io/leaflet/shiny.html&quot;)
+  ),
+  
+  p(
+    class=&quot;text-info&quot;,
+    paste(&quot;Click on cluster or scroll for zoom. Click on individual marker for additional detail popup.&quot;)
+  ),
+
+  
+  leafletOutput(&quot;mymap&quot;),
+  br(),
+  actionButton(&quot;reset&quot;,&quot;Reset Map View&quot;)
+  
+ 
+)</code></pre>
+<pre class="r"><code>library(rgdal)
+library(ggplot2)
+library(maptools)
+library(dplyr)
+library(ggmap)
+library(leaflet)
+library(dplyr)
+library(jsonlite)
+library(tidyr)
+library(curl)
+
+## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
 dccrimejsonlite &lt;- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
 ## use cbind() to access the list elements and create dataframe
 dc_crime_json &lt;- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
@@ -158,10 +230,52 @@ dc_crime_clean$DateClean &lt;- as.Date(dc_crime_clean$Date)
 
 bydate &lt;- group_by(dc_crime_clean,DateClean,OFFENSE,SHIFT)
 crimedc_bydate &lt;- summarise(bydate,
-                            count=n())</code></pre>
-<p>In the above, the data is retrieved using the <code>fromJSON()</code> function, and the columns are retrieved using the <code>cbind()</code> function.</p>
-<p>The latitude and longitude columns are cleaned using the <code>separate()</code> function from library <code>tidyr</code> and RegEx to remove erroneous characters from the columns.</p>
-<p>– in dev…</p>
+                            count=n())
+
+########---------------------------------------------------------------------#&gt;&gt;&gt;
+
+
+
+function(input, output, session) {
+  # jsonlite
+  ## AUTOMATION OF DC Crime Last 30 Days Data
+  ########---------------------------------------------------------------------#&gt;&gt;&gt;
+  
+  
+  points &lt;- eventReactive(input$reset, {
+    
+    cbind(dc_crime_clean$X,dc_crime_clean$Y)
+    
+    }, ignoreNULL = FALSE)
+  
+  output$mymap &lt;- renderLeaflet({
+    
+    leaflet() %&gt;%
+      addProviderTiles(&quot;OpenStreetMap.Mapnik&quot;,
+                       options = providerTileOptions(noWrap = TRUE)
+      ) %&gt;%
+      addMarkers(data = points(),popup = paste0(&quot;&lt;strong&gt;Report Datetime: &lt;/strong&gt;&quot;,
+                                                dc_crime_json$REPORTDATETIME,
+                                                &quot;&lt;br&gt;&lt;strong&gt;Offense: &lt;/strong&gt;&quot;, 
+                                                dc_crime_json$OFFENSE, 
+                                                &quot;&lt;br&gt;&lt;strong&gt;method: &lt;/strong&gt;&quot;, 
+                                                dc_crime_json$METHOD,
+                                                &quot;&lt;br&gt;&lt;strong&gt;shift:&lt;/strong&gt;&quot;,
+                                                dc_crime_json$SHIFT,
+                                                &quot;&lt;br&gt;&lt;strong&gt;blocksite address:&lt;/strong&gt;&lt;br&gt;&quot;,
+                                                dc_crime_json$BLOCKSITEADDRESS
+                                                ),
+                 
+                 clusterOptions = markerClusterOptions()
+                   
+                 ) 
+    
+  })
+
+  }</code></pre>
+</div>
+<div id="section" class="section level1">
+<h1>&lt;…&gt;</h1>
 </div>
 
 

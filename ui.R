@@ -3,8 +3,8 @@ library(shinythemes)
 library(leaflet)
 
 fluidPage(theme = shinytheme("cerulean"),
-  titlePanel("<in dev> DC Crime - Last 30 Days <in dev>"),
-  h3("<in dev> Map Explorer for last 30 days DC Crime Dataset <in dev>"),
+  titlePanel(" DC Crime - Last 30 Days "),
+  h3(" Map Explorer for last 30 days DC Crime Dataset "),
   
   helpText("Data May be Delayed"),
   p(
@@ -34,8 +34,6 @@ fluidPage(theme = shinytheme("cerulean"),
   
   leafletOutput("mymap"),
   br(),
-  dataTableOutput("table"),
-  
   actionButton("reset","Reset Map View")
   
  

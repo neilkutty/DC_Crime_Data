@@ -10,11 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Getting and cleaning the data
-For my first blog post in a *long* time, I thought I would write a how-to on creating a simple leaflet map in R with with open data from opendata.dc.gov
-
-Finding open data that is updated, recent, and easily accessible on the web has become easier with the recent strides in making data more accessible to everyone (see: opportunity.census.gov) and developers in particular (see: catalog.data.gov).  
-
-Wanting to keep this post lightweight, map-centric, and regionally relevant, I am using a local dataset for the last 30 days of crime in Washington, D.C.
 
 The dataset is available in downloadable or GeoJSON format. I'm going with JSON so that the shiny app can be standalone without additional need for data management.  
 
@@ -65,4 +60,130 @@ In the above, the data is retrieved using the ```fromJSON()``` function, and the
 
 The latitude and longitude columns are cleaned using the ```separate()``` function from library ```tidyr``` and RegEx to remove erroneous characters from the columns.
 
--- in dev... 
+```{r ui, eval=FALSE}
+library(shiny)
+library(shinythemes)
+library(leaflet)
+
+fluidPage(theme = shinytheme("cerulean"),
+  titlePanel("<in dev> DC Crime - Last 30 Days <in dev>"),
+  h3("<in dev> Map Explorer for last 30 days DC Crime Dataset <in dev>"),
+  
+  helpText("Data May be Delayed"),
+  p(
+    class="text-info",
+    a("data source: http://opendata.dc.gov/datasets",href="http://opendata.dc.gov/datasets"),
+    br(),
+   paste("GeoJSON API url: http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson"),
+    br()
+   ),
+  p(
+    class="text-muted",
+    paste("If disconnected from server, try reloading... map is in dev with new features to be added. \n suggestions and evolutions are welcome:"),
+    a("github",href="https://github.com/sampsonsimpson/DC_Crime_Data")
+  ),
+  p(
+    class="text-primary",
+    a("author: neil kutty", href="http:/twitter.com/neilkutty"),
+    br(),
+    a("original ui and server code", href="https://rstudio.github.io/leaflet/shiny.html")
+  ),
+  
+  p(
+    class="text-info",
+    paste("Click on cluster or scroll for zoom. Click on individual marker for additional detail popup.")
+  ),
+
+  
+  leafletOutput("mymap"),
+  br(),
+  actionButton("reset","Reset Map View")
+  
+ 
+)
+```
+
+```{r server.R file, eval=FALSE}
+
+library(rgdal)
+library(ggplot2)
+library(maptools)
+library(dplyr)
+library(ggmap)
+library(leaflet)
+library(dplyr)
+library(jsonlite)
+library(tidyr)
+library(curl)
+
+## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
+dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
+## use cbind() to access the list elements and create dataframe
+dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
+
+## Get distinct Offenses for shiny input
+offenses <- distinct(select(dc_crime_json,OFFENSE))
+row.names(offenses) <- offenses$OFFENSE
+
+## Seperate and clean lat/long columns
+## --also separate REPORTDATETIME column
+dc_crime_clean <- dc_crime_json %>% 
+  separate(coordinates, into = c("X", "Y"), sep = ",")%>%
+  separate(REPORTDATETIME, into = c("Date","Time"), sep="T")
+
+## convert lat and long columns to numbers and remove non numeric characters
+dc_crime_clean$X <- as.numeric(gsub("c\\(","",dc_crime_clean$X))
+dc_crime_clean$Y <- as.numeric(gsub("\\)","",dc_crime_clean$Y))
+
+#Create date column from datetime
+
+dc_crime_clean$DateClean <- as.Date(dc_crime_clean$Date)
+
+bydate <- group_by(dc_crime_clean,DateClean,OFFENSE,SHIFT)
+crimedc_bydate <- summarise(bydate,
+                            count=n())
+
+########---------------------------------------------------------------------#>>>
+
+
+
+function(input, output, session) {
+  # jsonlite
+  ## AUTOMATION OF DC Crime Last 30 Days Data
+  ########---------------------------------------------------------------------#>>>
+  
+  
+  points <- eventReactive(input$reset, {
+    
+    cbind(dc_crime_clean$X,dc_crime_clean$Y)
+    
+    }, ignoreNULL = FALSE)
+  
+  output$mymap <- renderLeaflet({
+    
+    leaflet() %>%
+      addProviderTiles("OpenStreetMap.Mapnik",
+                       options = providerTileOptions(noWrap = TRUE)
+      ) %>%
+      addMarkers(data = points(),popup = paste0("<strong>Report Datetime: </strong>",
+                                                dc_crime_json$REPORTDATETIME,
+                                                "<br><strong>Offense: </strong>", 
+                                                dc_crime_json$OFFENSE, 
+                                                "<br><strong>method: </strong>", 
+                                                dc_crime_json$METHOD,
+                                                "<br><strong>shift:</strong>",
+                                                dc_crime_json$SHIFT,
+                                                "<br><strong>blocksite address:</strong><br>",
+                                                dc_crime_json$BLOCKSITEADDRESS
+                                                ),
+                 
+                 clusterOptions = markerClusterOptions()
+                   
+                 ) 
+    
+  })
+
+  }
+```
+
+#<...>

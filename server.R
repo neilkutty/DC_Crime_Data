@@ -76,16 +76,5 @@ function(input, output, session) {
                  ) 
     
   })
-  
-  ##
-  ##create a table for recent crimes
-  ##
-  
-   output$table <- renderDataTable({
-     short_table <- data.frame(dc_crime_clean$Date,
-                               dc_crime_clean$Time,
-                               dc_crime_clean$OFFENSE,
-                               dc_crime_clean$SHIFT)
-   })
- 
+
   }
