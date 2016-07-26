@@ -1,0 +1,10 @@
+name: crimeDC
+account: kuttyman
+server: shinyapps.io
+appId: 113630
+bundleId: 515234
+url: https://kuttyman.shinyapps.io/crimeDC/
+when: 1469484112.52111
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: garbage.R|json.R|readme.html|readme.rmd
