@@ -63,12 +63,12 @@ function(input, output, session) {
               )
       
     })
-  # 
-  # output$table1 <- 
-  #   renderDataTable(options=list(pageLength=5,lengthMenu=FALSE),{
-  #     filterData()%>%
-  #       select(Weekday, SHIFT, Date, Time, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
-  #   })
+  
+   output$table1 <- 
+     renderDataTable(options=list(pageLength=5,lengthMenu=FALSE),{
+       filterData()%>%
+         select(Weekday, SHIFT, Date, Time, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
+     })
   
   points <- eventReactive(input$reset, {
     
