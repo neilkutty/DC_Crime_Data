@@ -65,7 +65,7 @@ function(input, output, session) {
     })
   
    output$table1 <- 
-     renderDataTable(options=list(pageLength=5,lengthMenu=FALSE),{
+     renderDataTable(options=list(pageLength=15),{
        filterData()%>%
          select(Weekday, SHIFT, Date, Time, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
      })
