@@ -4,101 +4,45 @@
 deployed map: (https://kuttyman.shinyapps.io/crimeDC)
 
 
-## Getting and cleaning the data
+#### Below are the full ui and server files for the Shiny app
 
-The dataset is available in downloadable or GeoJSON format. I'm going with JSON so that the shiny app can be standalone without additional need for data management.  
-
-Several libraries are required for this project. use the `install.packages('packagename')` command to install the libraries/packages before attempting the code to load them below
-
-```{r libraries,eval=FALSE}
-
-library(ggplot2)
-library(leaflet)
-library(dplyr)
-library(tidyr)
-library(jsonlite)
-library(curl)
-
-```
-
-Utilizing the ```jsonlite``` library and some cleanup code we create a usable dataset below: 
-
-```{r json,eval=FALSE}
-  ## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
-  dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
-  ## use cbind() combine the list elements and create a dataframe
-  dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
-  
-  ## Get distinct Offenses for shiny input
-  offenses <- distinct(select(dc_crime_json,OFFENSE))
-  row.names(offenses) <- offenses$OFFENSE
-  
-  ## Seperate and clean lat/long columns but keep original datetime column
-  ## --also separate REPORTDATETIME column
-  dc_crime_clean <- dc_crime_json %>% 
-    separate(coordinates, into = c("X", "Y"), sep = ",", remove = FALSE)%>%
-    separate(REPORTDATETIME, into = c("Date","Time"), sep="T", remove = FALSE)%>%
-    mutate(Weekday = weekdays(as.Date(REPORTDATETIME)))
-  
-  ## convert lat and long columns to numbers and remove non numeric characters
-  dc_crime_clean$X <- as.numeric(gsub("c\\(","",dc_crime_clean$X))
-  dc_crime_clean$Y <- as.numeric(gsub("\\)","",dc_crime_clean$Y))
-  
-  #Create date column from datetime
-  dc_crime_clean$DateClean <- as.Date(dc_crime_clean$Date)
-```
-
-In the above, the data is retrieved using the ```fromJSON()``` function, and the columns are retrieved using the ```cbind()``` function. 
-
-The latitude and longitude columns are cleaned using the ```separate()``` function from library ```tidyr``` and RegEx to remove erroneous characters from the columns.
-
--- Below are the full ui and server files for the Shiny app
 ###ui.R 
 ```{r ui, eval=FALSE}
 library(shiny)
 library(shinythemes)
 library(leaflet)
 
-fluidPage(theme = shinytheme("cerulean"),
-  titlePanel("DC Crime - Last 30 Days"),
-  h3("Map Explorer for last 30 days DC Crime Dataset "),
-  
-  helpText("Click on cluster or scroll to zoom-in."),
-  helpText("Click an individual marker for additional detail popup."),
-  helpText("..."),
-  
-  p(
-    class="text-info",
-    a("data source: http://opendata.dc.gov/datasets",href="http://opendata.dc.gov/datasets"),
-    br(),
-    paste("GeoJSON API url: http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson"),
-    br()
-  ),
-
-  p(
-    class="text-primary",
-    a("author: neil kutty", href="http:/twitter.com/neilkutty"),
-    a("github",href="https://github.com/sampsonsimpson/DC_Crime_Data")
-  ),
-  
-  p(
-    class="text-info",
-    paste("")
-  ),
-  br(),
-  actionButton("reset","Reset Map View"),
-  br(),
-  
-  leafletOutput("mymap", width = '100%', height = '750px'),
+fluidPage(#theme = shinytheme("cerulean"),
+          tags$head(
+           
+           includeCSS("style.css")
+           
+          ),
+          navbarPage("Crime DC",id='nav',
+            tabPanel("Interactive Map",
+                     leafletOutput("mymap", width = '75%', height = '700px'),
+                     br(),
+                     absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
+                                   draggable = TRUE, top = 60, left = "auto", right = 20, bottom = "auto",
+                                   width = 500, height = "auto",style = "opacity: .75",
+                                            
+                                   h2("Crime DC - Last 30 Days"),
+                                   paste("Click on cluster or scroll to zoom-in, Click an individual marker for additional detail popup."),
+                                   a("data source: http://opendata.dc.gov/datasets",href="http://opendata.dc.gov/datasets"),
+                                   br(),
+                                   a("author: neil kutty", href="http:/twitter.com/neilkutty"),
+                                   a("github",href="https://github.com/sampsonsimpson/DC_Crime_Data"),
+                                     
+                                  plotOutput("plotOffense",height=300),
+                                  plotOutput("plotDay",height=300)
+                                            )
+          ),
+          tabPanel("Data Explorer",
+                   dataTableOutput("table1")
+                   
+          )
+        )
             
-    
-  br(),
-  absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
-                draggable = TRUE, top = 60, left = "auto", right = 20, bottom = "auto",
-                width = 330, height = "auto",
-               plotOutput("plot1",height=200),
-               style = "opacity: .75")
-
   
 )
 
@@ -157,26 +101,43 @@ function(input, output, session) {
            Y >= latRng[1] & Y <= latRng[2] & X >= lngRng[1] & X <= lngRng[2])
   })
   
-  output$plot1 <-  
+  output$plotOffense <-  
     renderPlot({
       off <- as.data.frame(table(filterData()$OFFENSE))
       off$Freq <- as.numeric(off$Freq)
-      off$Var1 <- reorder(off$Var1,off$Freq)
+      off$Var1 <- reorder(off$Var1,-off$Freq)
       colnames(off) <- c("OFFENSE","COUNT")
       ggplot(off, aes(x=OFFENSE,y=COUNT)) +
         geom_bar(stat="identity",alpha = 0.3,color='red',fill='red') +
+        ggtitle("Number of Crimes by Offense") +
         geom_text(aes(label = off$COUNT), size = 5.5, hjust = .77, color = "black")+
         theme(axis.title=element_text(size=10),
               axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
               )
       
     })
-  # 
-  # output$table1 <- 
-  #   renderDataTable(options=list(pageLength=5,lengthMenu=FALSE),{
-  #     filterData()%>%
-  #       select(Weekday, SHIFT, Date, Time, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
-  #   })
+  
+  output$plotDay <-  
+    renderPlot({
+      day <- as.data.frame(table(filterData()$Weekday))
+      day$Freq <- as.numeric(day$Freq)
+      day$Var1 <- reorder(day$Var1,-day$Freq)
+      colnames(day) <- c("Weekday","COUNT")
+      ggplot(day, aes(x=Weekday,y=COUNT)) +
+        geom_bar(stat="identity",alpha = 0.3,color='blue',fill='blue') +
+        ggtitle("Number of Crimes by Day of Week") +
+        geom_text(aes(label = day$COUNT), size = 5.5, hjust = .77, color = "black")+
+        theme(axis.title=element_text(size=10),
+              axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
+        )
+      
+    })
+  
+   output$table1 <- 
+     renderDataTable(options=list(pageLength=15),{
+       filterData()%>%
+         select(Weekday, SHIFT, Date, Time, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
+     })
   
   points <- eventReactive(input$reset, {
     

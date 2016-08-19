@@ -49,18 +49,35 @@ function(input, output, session) {
            Y >= latRng[1] & Y <= latRng[2] & X >= lngRng[1] & X <= lngRng[2])
   })
   
-  output$plot1 <-  
+  output$plotOffense <-  
     renderPlot({
       off <- as.data.frame(table(filterData()$OFFENSE))
       off$Freq <- as.numeric(off$Freq)
-      off$Var1 <- reorder(off$Var1,off$Freq)
+      off$Var1 <- reorder(off$Var1,-off$Freq)
       colnames(off) <- c("OFFENSE","COUNT")
       ggplot(off, aes(x=OFFENSE,y=COUNT)) +
         geom_bar(stat="identity",alpha = 0.3,color='red',fill='red') +
+        ggtitle("Number of Crimes by Offense") +
         geom_text(aes(label = off$COUNT), size = 5.5, hjust = .77, color = "black")+
         theme(axis.title=element_text(size=10),
               axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
               )
+      
+    })
+  
+  output$plotDay <-  
+    renderPlot({
+      day <- as.data.frame(table(filterData()$Weekday))
+      day$Freq <- as.numeric(day$Freq)
+      day$Var1 <- reorder(day$Var1,-day$Freq)
+      colnames(day) <- c("Weekday","COUNT")
+      ggplot(day, aes(x=Weekday,y=COUNT)) +
+        geom_bar(stat="identity",alpha = 0.3,color='blue',fill='blue') +
+        ggtitle("Number of Crimes by Day of Week") +
+        geom_text(aes(label = day$COUNT), size = 5.5, hjust = .77, color = "black")+
+        theme(axis.title=element_text(size=10),
+              axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
+        )
       
     })
   
