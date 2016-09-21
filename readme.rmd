@@ -1,7 +1,82 @@
+---
+title: "Creating a Simple Interactive Map with R, Leaflet, and Shiny"
+author: "Neil Kutty"
+date: "September 1, 2016"
+output: html_document
+---
 
-##Creating a Simple Interactive Map with R, Leaflet, and Shiny
+
+```{r setup, include=FALSE, eval=TRUE}
+library(ggplot2)
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(jsonlite)
+library(curl)
+library(lubridate)
+
+```
+
+
 ####data: DC Crime - Last 30 Days
-deployed map: (https://kuttyman.shinyapps.io/crimeDC)
+deployed Shiny app: (https://kuttyman.shinyapps.io/crimeDC)
+
+###### Data Source:
+http://opendata.dc.gov/datasets
+
+### - Clean and transform data from GeoJSON format into  a dataframe
+
+```{r cleandata, eval=TRUE}
+########---------------------------------------------------------------------#>>>
+  ## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
+  dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
+  ## use cbind() combine the list elements and create a dataframe
+  dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
+  
+  ## Get distinct Offenses for shiny input
+  offenses <- distinct(select(dc_crime_json,OFFENSE))
+  row.names(offenses) <- offenses$OFFENSE
+  
+  ## Seperate and clean lat/long columns but keep original datetime column
+  ## --also separate REPORTDATETIME column
+  dc_crime_clean <- dc_crime_json %>% 
+    separate(coordinates, into = c("X", "Y"), sep = ",")%>%
+    separate(REPORTDATETIME, into = c("Date","Time"), sep="T", remove = FALSE)%>%
+    mutate(Weekday = weekdays(as.Date(REPORTDATETIME)),
+           DATETIME = ymd_hms(REPORTDATETIME, tz='America/New_York'),
+           Date = as.Date(Date),
+           X = as.numeric(gsub("c\\(","",X)),
+           Y = as.numeric(gsub("\\)","",Y)))
+
+```
+
+
+### - Render the leaflet map
+
+*Define a `points` element with the latitude and longitude vectors corresponding to the dataframe.
+
+```{r map, eval=TRUE}
+points <- cbind(dc_crime_clean$X,dc_crime_clean$Y)
+leaflet() %>%
+  addProviderTiles("OpenStreetMap.Mapnik",
+                   options = providerTileOptions(noWrap = TRUE)
+  ) %>%
+  addMarkers(data = points,
+             popup = paste0("<strong>Report Date: </strong>",
+                            dc_crime_clean$DateClean,
+                            "<br><strong>Offense: </strong>", 
+                            dc_crime_clean$OFFENSE, 
+                            "<br><strong>method: </strong>", 
+                            dc_crime_clean$METHOD,
+                            "<br><strong>shift: </strong>",
+                            dc_crime_clean$SHIFT,
+                            "<br><strong>blocksite address: </strong><br>",
+                            dc_crime_clean$BLOCKSITEADDRESS
+             ),
+             clusterOptions = markerClusterOptions()
+  ) 
+  
+```
 
 
 #### Below are the full ui and server files for the Shiny app
@@ -12,41 +87,44 @@ library(shiny)
 library(shinythemes)
 library(leaflet)
 
-fluidPage(#theme = shinytheme("cerulean"),
+fluidPage(theme = shinytheme("cerulean"),
           tags$head(
-           
-           includeCSS("style.css")
+            # Include our custom CSS
+           #includeCSS("style.css")
            
           ),
           navbarPage("Crime DC",id='nav',
             tabPanel("Interactive Map",
-                     leafletOutput("mymap", width = '75%', height = '700px'),
+                     fluidRow(
+                      column(4,plotOutput("plotOffense",height=300)),
+                      column(4,plotOutput("plotDay",height=300)),
+                      column(4,plotOutput("plotShift",height=300))
+                     ),
+                     leafletOutput("mymap", width = '100%', height = '600px'),
                      br(),
-                     absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
-                                   draggable = TRUE, top = 60, left = "auto", right = 20, bottom = "auto",
-                                   width = 500, height = "auto",style = "opacity: .75",
-                                            
+                     absolutePanel(id = "controls",class = "panel panel-default", fixed = TRUE, draggable = TRUE,
+                                   top = 500, left = "auto", right = 20, bottom = "auto",
+                                   width = 330, height = "auto", style = "opacity: .75",
+                                           
                                    h2("Crime DC - Last 30 Days"),
                                    paste("Click on cluster or scroll to zoom-in, Click an individual marker for additional detail popup."),
                                    a("data source: http://opendata.dc.gov/datasets",href="http://opendata.dc.gov/datasets"),
                                    br(),
                                    a("author: neil kutty", href="http:/twitter.com/neilkutty"),
-                                   a("github",href="https://github.com/sampsonsimpson/DC_Crime_Data"),
+                                   a("github",href="https://github.com/sampsonsimpson/DC_Crime_Data")
                                      
-                                  plotOutput("plotOffense",height=300),
-                                  plotOutput("plotDay",height=300)
+                                  
                                             )
           ),
           tabPanel("Data Explorer",
                    dataTableOutput("table1")
-                   
+                   )
           )
         )
-            
-  
-)
 
 ```
+
+<hr>
 
 ###server.R
 ```{r server.R file, eval=FALSE}
@@ -57,6 +135,7 @@ library(dplyr)
 library(tidyr)
 library(jsonlite)
 library(curl)
+library(lubridate)
 
 
 ########---------------------------------------------------------------------#>>>
@@ -72,21 +151,17 @@ library(curl)
   ## Seperate and clean lat/long columns but keep original datetime column
   ## --also separate REPORTDATETIME column
   dc_crime_clean <- dc_crime_json %>% 
-    separate(coordinates, into = c("X", "Y"), sep = ",", remove = FALSE)%>%
+    separate(coordinates, into = c("X", "Y"), sep = ",")%>%
     separate(REPORTDATETIME, into = c("Date","Time"), sep="T", remove = FALSE)%>%
-    mutate(Weekday = weekdays(as.Date(REPORTDATETIME)))
+    mutate(Weekday = weekdays(as.Date(REPORTDATETIME)),
+           DATETIME = ymd_hms(REPORTDATETIME, tz='America/New_York'),
+           Date = as.Date(Date),
+           X = as.numeric(gsub("c\\(","",X)),
+           Y = as.numeric(gsub("\\)","",Y)))
+           
   
-  ## convert lat and long columns to numbers and remove non numeric characters
-  dc_crime_clean$X <- as.numeric(gsub("c\\(","",dc_crime_clean$X))
-  dc_crime_clean$Y <- as.numeric(gsub("\\)","",dc_crime_clean$Y))
-  
-  #Create date column from datetime
-  dc_crime_clean$DateClean <- as.Date(dc_crime_clean$Date)
-########---------------------------------------------------------------------#>>>
-#get summary stats
 
-
-
+#Shiny server
 function(input, output, session) {
   
   
@@ -105,14 +180,15 @@ function(input, output, session) {
     renderPlot({
       off <- as.data.frame(table(filterData()$OFFENSE))
       off$Freq <- as.numeric(off$Freq)
-      off$Var1 <- reorder(off$Var1,-off$Freq)
+      off$Var1 <- factor(off$Var1)
       colnames(off) <- c("OFFENSE","COUNT")
       ggplot(off, aes(x=OFFENSE,y=COUNT)) +
         geom_bar(stat="identity",alpha = 0.3,color='red',fill='red') +
         ggtitle("Number of Crimes by Offense") +
         geom_text(aes(label = off$COUNT), size = 5.5, hjust = .77, color = "black")+
+        coord_flip()+
         theme(axis.title=element_text(size=10),
-              axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
+              axis.text.x = element_text(face = 'bold', size=10, hjust = 1)
               )
       
     })
@@ -121,10 +197,12 @@ function(input, output, session) {
     renderPlot({
       day <- as.data.frame(table(filterData()$Weekday))
       day$Freq <- as.numeric(day$Freq)
-      day$Var1 <- reorder(day$Var1,-day$Freq)
       colnames(day) <- c("Weekday","COUNT")
+      day$Weekday <- factor(day$Weekday, levels= c("Sunday", "Monday", 
+                                  "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+      day[order(day$Weekday),]
       ggplot(day, aes(x=Weekday,y=COUNT)) +
-        geom_bar(stat="identity",alpha = 0.3,color='blue',fill='blue') +
+        geom_bar(stat="identity",alpha = 0.3,color = 'blue', fill='blue') +
         ggtitle("Number of Crimes by Day of Week") +
         geom_text(aes(label = day$COUNT), size = 5.5, hjust = .77, color = "black")+
         theme(axis.title=element_text(size=10),
@@ -133,10 +211,27 @@ function(input, output, session) {
       
     })
   
+  output$plotShift<-  
+    renderPlot({
+      Shift <- as.data.frame(table(filterData()$SHIFT))
+      Shift$Freq <- as.numeric(Shift$Freq)
+      colnames(Shift) <- c("Time Of Day","COUNT")
+      Shift$`Time Of Day` <- factor(Shift$`Time Of Day`, levels=c('DAY','EVENING','MIDNIGHT'))
+      Shift[order(Shift$`Time Of Day`),]
+      ggplot(Shift, aes(x=`Time Of Day`,y=COUNT)) +
+        geom_bar(stat="identity",alpha = 0.3,color = 'orange', fill='orange') +
+        ggtitle("Number of Crimes by Shift") +
+        geom_text(aes(label = Shift$COUNT), size = 5.5, hjust = .77, color = "black")+
+        theme(axis.title=element_text(size=10),
+              axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
+        )
+      
+    })
+  
    output$table1 <- 
-     renderDataTable(options=list(pageLength=15),{
+     renderDataTable(options=list(pageLength=25),{
        filterData()%>%
-         select(Weekday, SHIFT, Date, Time, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
+         select(Weekday, SHIFT, DATETIME, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
      })
   
   points <- eventReactive(input$reset, {
@@ -144,6 +239,7 @@ function(input, output, session) {
     cbind(dc_crime_clean$X,dc_crime_clean$Y)
     
     }, ignoreNULL = FALSE)
+  
   
 
    output$mymap <- renderLeaflet({
@@ -159,9 +255,9 @@ function(input, output, session) {
                                 dc_crime_clean$OFFENSE, 
                                 "<br><strong>method: </strong>", 
                                 dc_crime_clean$METHOD,
-                                "<br><strong>shift:</strong>",
+                                "<br><strong>shift: </strong>",
                                 dc_crime_clean$SHIFT,
-                                "<br><strong>blocksite address:</strong><br>",
+                                "<br><strong>blocksite address: </strong><br>",
                                 dc_crime_clean$BLOCKSITEADDRESS
                  ),
                  clusterOptions = markerClusterOptions()
