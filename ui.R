@@ -25,13 +25,6 @@ fluidPage(#theme = shinytheme("cerulean"),
                       column(4,plotOutput("plotShift",height=300))
                      ),
                      
-                     sliderInput("timeCntrl",
-                                 label = "Select Timeframe",
-                                 step = 1,
-                                 min = min(dc_crime_clean$Date),
-                                 max = max(dc_crime_clean$Date),
-                                 value = c(min(dc_crime_clean$Date),max(dc_crime_clean$Date))),
-                     
                      leafletOutput("mymap", width = '100%', height = '600px'),
                      br(),
                      absolutePanel(id = "controls",class = "panel panel-default", fixed = TRUE, draggable = TRUE,

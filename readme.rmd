@@ -1,42 +1,61 @@
 ---
-title: "Creating a Simple Interactive Map with R, Leaflet, and Shiny"
+title: "Creating a Simple Interactive Map with R and Leaflet"
 author: "Neil Kutty"
 date: "September 1, 2016"
 output: html_document
 ---
 
+deployed Shiny app: [Crime DC - Last 30 Days](https://kuttyman.shinyapps.io/crimeDC)
 
-```{r setup, include=FALSE, eval=TRUE}
-library(ggplot2)
-library(leaflet)
+data: DC Crime - Last 30 Days [Open Data DC](http://opendata.dc.gov/datasets)
+
+***
+
+### Load needed libraries.
+
+  + `dplyr` for distinct(), select(), and mutate() functions.
+  + `tidyr` for the separate() function.
+  + `jsonlite` for the fromJSON() function needed to retrieve our dataset via the GeoJSON api.
+  + `lubridate` for ymd_hms() function to clean datetime column.
+  + `leaflet` to create our map.
+
+```{r setup, include=TRUE, eval=TRUE, message=FALSE}
 library(dplyr)
 library(tidyr)
 library(jsonlite)
-library(curl)
 library(lubridate)
-
+library(leaflet)
 ```
 
 
-####data: DC Crime - Last 30 Days
-deployed Shiny app: (https://kuttyman.shinyapps.io/crimeDC)
 
-###### Data Source:
-http://opendata.dc.gov/datasets
+### Clean and transform data from GeoJSON format into a dataframe
 
-### - Clean and transform data from GeoJSON format into  a dataframe
+**Fig 1.**
+
+Our data comes in a `GeoJSON` format.  For a good primer on dealing with this and `JSON` data sources in general, see: 
+
+ + [GeoJSON Format](https://tools.ietf.org/html/rfc7946)
+ + [Using jsonlite library in R](https://cran.r-project.org/web/packages/jsonlite/vignettes/json-aaquickstart.html)
+
+The data source link can be viewed/downloaded [here](http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson). Note that it is in JSON document/collection format.  The `jsonlite::fromJSON()` function retrieves the from the collection format it exists in and stores it in list format in the variable defined `dccrimejsonlite`.
+
+We access the list elements which are nested within the `features` level, and then combine these two large lists:
+
+- `properties` list which contain the main table elements for the dataset. 
+- `geometry` list which contains the **latitude** and **longitude** columns which we will need to map the data. 
+
+Using the `cbind` function, we combine these two lists into a dataframe defined as `dc_crime_json`.  Our next step is to clean the data and return a usable dataframe.  
 
 ```{r cleandata, eval=TRUE}
+# Fig. 1 
+
 ########---------------------------------------------------------------------#>>>
   ## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
   dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
   ## use cbind() combine the list elements and create a dataframe
   dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
-  
-  ## Get distinct Offenses for shiny input
-  offenses <- distinct(select(dc_crime_json,OFFENSE))
-  row.names(offenses) <- offenses$OFFENSE
-  
+
   ## Seperate and clean lat/long columns but keep original datetime column
   ## --also separate REPORTDATETIME column
   dc_crime_clean <- dc_crime_json %>% 
@@ -51,9 +70,12 @@ http://opendata.dc.gov/datasets
 ```
 
 
-### - Render the leaflet map
+### Render the leaflet map
 
-*Define a `points` element with the latitude and longitude vectors corresponding to the dataframe.
+First, we define a `points` element with the latitude and longitude vectors corresponding to the dataframe. This is used to pass the Latitude and Longitude columns to the leaflet map: see below where `addMarkers(data = points ...`.
+
+Rendering a map with leaflet is as easy as calling the `leaflet()` function.  Using chain operation, we simply add elements to our map after calling it.  
+
 
 ```{r map, eval=TRUE}
 points <- cbind(dc_crime_clean$X,dc_crime_clean$Y)
@@ -124,7 +146,7 @@ fluidPage(theme = shinytheme("cerulean"),
 
 ```
 
-<hr>
+***
 
 ###server.R
 ```{r server.R file, eval=FALSE}
@@ -267,4 +289,3 @@ function(input, output, session) {
 }
 ```
 
-#<...>

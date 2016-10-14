@@ -6,6 +6,8 @@ library(tidyr)
 library(jsonlite)
 library(curl)
 library(lubridate)
+library(rgdal)
+
 
 
 ########---------------------------------------------------------------------#>>>
@@ -24,27 +26,23 @@ library(lubridate)
     separate(coordinates, into = c("X", "Y"), sep = ",")%>%
     separate(REPORTDATETIME, into = c("Date","Time"), sep="T", remove = FALSE)%>%
     mutate(Weekday = weekdays(as.Date(REPORTDATETIME)),
-           DATETIME = ymd_hms(REPORTDATETIME, tz='America/New_York'),
            Date = as.Date(Date),
            X = as.numeric(gsub("c\\(","",X)),
            Y = as.numeric(gsub("\\)","",Y)))
            
+  dc_crime_clean$DATETIME = as.POSIXct(strptime(dc_crime_clean$REPORTDATETIME, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
+  dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
   
-
 #Shiny server
 function(input, output, session) {
-  
-      
-    filterData <- reactive({
-      
-
-    if (is.null(input$mymap_bounds))
-      return(dc_crime_clean)
-    bounds <- input$mymap_bounds
-    latRng <- range(bounds$north, bounds$south)
-    lngRng <- range(bounds$east, bounds$west)
     
-    filter(dc_crime_clean, Y >= latRng[1] & Y <= latRng[2] & X >= lngRng[1] & X <= lngRng[2])
+    filterData <- reactive({
+      if (is.null(input$mymap_bounds))
+      return(dc_crime_clean)
+      bounds <- input$mymap_bounds
+      latRng <- range(bounds$north, bounds$south)
+      lngRng <- range(bounds$east, bounds$west)
+      filter(dc_crime_clean, Y >= latRng[1] & Y <= latRng[2] & X >= lngRng[1] & X <= lngRng[2])
   })
 
   output$plotOffense <-  
@@ -102,17 +100,14 @@ function(input, output, session) {
    output$table1 <- 
      renderDataTable(options=list(pageLength=25),{
        filterData()%>%
-         select(Weekday, SHIFT, DATETIME, BLOCKSITEADDRESS, OFFENSE, METHOD, OBJECTID)
+         select(Weekday, SHIFT, DATETIME, BLOCKSITEADDRESS, OFFENSE, METHOD)
      })
- 
-   
-  points <- reactive({
-    
-    cbind(dc_crime_clean$X,dc_crime_clean$Y)
-    
-    })
   
-  
+   points <- reactive({
+     
+     cbind(dc_crime_clean$X,dc_crime_clean$Y)
+     
+   })
 
    output$mymap <- renderLeaflet({
     
@@ -122,7 +117,7 @@ function(input, output, session) {
       ) %>%
       addMarkers(data = points(),
                  popup = paste0("<strong>Report Date: </strong>",
-                                dc_crime_clean$DateClean,
+                                dc_crime_clean$DATETIME,
                                 "<br><strong>Offense: </strong>", 
                                 dc_crime_clean$OFFENSE, 
                                 "<br><strong>method: </strong>", 
@@ -133,7 +128,12 @@ function(input, output, session) {
                                 dc_crime_clean$BLOCKSITEADDRESS
                  ),
                  clusterOptions = markerClusterOptions()
-      ) 
+      ) %>%
+       addPolygons(data = dchoods, 
+                   fillOpacity = 0.6, 
+                   color = 'blue', 
+                   weight = 2.0
+                   )
     
   })
 }
