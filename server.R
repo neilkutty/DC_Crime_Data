@@ -46,57 +46,55 @@ function(input, output, session) {
   })
 
   output$plotOffense <-  
-    renderPlot({
+    if(is.null(filterData)){
+    return()
+    }else{
+      renderPlot({
       off <- as.data.frame(table(filterData()$OFFENSE))
       off$Freq <- as.numeric(off$Freq)
       off$Var1 <- factor(off$Var1)
       colnames(off) <- c("OFFENSE","COUNT")
       ggplot(off, aes(x=OFFENSE,y=COUNT)) +
-        geom_bar(stat="identity",alpha = 0.3,color='red',fill='red') +
+        geom_bar(stat="identity",alpha = 0.45, fill='red') +
         ggtitle("Number of Crimes by Offense") +
-        geom_text(aes(label = off$COUNT), size = 5.5, hjust = .77, color = "black")+
+        geom_text(aes(label = off$COUNT), size = 3.5, hjust = .58, color = "black")+
         coord_flip()+
+        scale_x_discrete(label = function(x) lapply(strwrap(x, width = 10, simplify = FALSE), paste, collapse="\n"))+
         theme(axis.title=element_text(size=10),
-              axis.text.x = element_text(face = 'bold', size=10, hjust = 1)
+              axis.text.y = element_text(size=10, hjust = 1),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank()
               )
       
-    })
+    })}
+
   
-  output$plotDay <-  
+  output$plotDayTime <-
+    if(is.null(filterData)){
+      return()
+    }else{
     renderPlot({
-      day <- as.data.frame(table(filterData()$Weekday))
-      day$Freq <- as.numeric(day$Freq)
-      colnames(day) <- c("Weekday","COUNT")
-      day$Weekday <- factor(day$Weekday, levels= c("Sunday", "Monday", 
-                                  "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
-      day[order(day$Weekday),]
-      ggplot(day, aes(x=Weekday,y=COUNT)) +
-        geom_bar(stat="identity",alpha = 0.3,color = 'blue', fill='blue') +
-        ggtitle("Number of Crimes by Day of Week") +
-        geom_text(aes(label = day$COUNT), size = 5.5, hjust = .77, color = "black")+
+      dt <- filterData() %>%
+        select(Weekday, SHIFT) %>%
+        group_by(Weekday, SHIFT) %>%
+        summarize(count = n())
+      dt$Weekday <- factor(dt$Weekday, levels= c("Sunday", "Monday","Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+      dt$SHIFT <- factor(dt$SHIFT, levels= c("DAY","EVENING","MIDNIGHT"))
+      dt[order(dt$Weekday,dt$SHIFT),]
+      ggplot(dt,aes(x=SHIFT,y=count,fill=SHIFT)) +
+        geom_bar(stat="identity", alpha = 0.75) +
+        scale_fill_brewer(palette = 'Set2')+
+        scale_y_continuous()+
+#        geom_text(aes(label = dt$count))+
+        facet_grid(.~Weekday)+
         theme(axis.title=element_text(size=10),
-              axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
-        )
+              axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              panel.background = element_rect(fill = "white"),
+              strip.background = element_rect(fill = "white"))
+      })}
       
-    })
-  
-  output$plotShift<-  
-    renderPlot({
-      Shift <- as.data.frame(table(filterData()$SHIFT))
-      Shift$Freq <- as.numeric(Shift$Freq)
-      colnames(Shift) <- c("Time Of Day","COUNT")
-      Shift$`Time Of Day` <- factor(Shift$`Time Of Day`, levels=c('DAY','EVENING','MIDNIGHT'))
-      Shift[order(Shift$`Time Of Day`),]
-      ggplot(Shift, aes(x=`Time Of Day`,y=COUNT)) +
-        geom_bar(stat="identity",alpha = 0.3,color = 'orange', fill='orange') +
-        ggtitle("Number of Crimes by Shift") +
-        geom_text(aes(label = Shift$COUNT), size = 5.5, hjust = .77, color = "black")+
-        theme(axis.title=element_text(size=10),
-              axis.text.x = element_text(face = 'bold', size=10, angle = 45, hjust = 1)
-        )
-      
-    })
-  
    output$table1 <- 
      renderDataTable(options=list(pageLength=25),{
        filterData()%>%
@@ -130,9 +128,11 @@ function(input, output, session) {
                  clusterOptions = markerClusterOptions()
       ) %>%
        addPolygons(data = dchoods, 
-                   fillOpacity = 0.6, 
-                   color = 'blue', 
+                   fillOpacity = 0.2, 
+                   color = 'blue',
+                   fillColor = 'white',
                    weight = 2.0
+                   
                    )
     
   })
