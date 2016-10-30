@@ -19,18 +19,31 @@ fluidPage(#theme = shinytheme("cerulean"),
           ),
           navbarPage("Crime DC",id='nav',
             tabPanel("Interactive Map",
-                     h5('These charts update to reflect data points in the current viewable area of the map. The Data Explorer tab shows the corresponding rows of the viewable area.'),
+                     h5('These charts update to reflect data points in the current viewable area of the map. 
+                        The Data Explorer tab shows the corresponding rows of the viewable area.'),
+                 
+                     
+                       
+                     fluidRow(column(7,leafletOutput("mymap", width = '100%', height = '400px')),
+                              column(5,plotOutput("plotDayTime"))),
+                     
+                     
                      fluidRow(
-                      column(4,plotOutput("plotOffense",height=400)),
-                      column(8,plotOutput("plotDayTime",height=400))
-                     ),
-                     leafletOutput("mymap", width = '100%', height = '400px'),
+                              column(4,plotOutput("plotOffense")),
+                              column(4,plotOutput("plotTimeline")),
+                              column(4,plotOutput("plotSeries"))
+                              ),
+                     
+                    
+                      
                      br(),
                      absolutePanel(id = "controls",class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                                   top = 500, left = "auto", right = 20, bottom = "auto",
-                                   width = 330, height = "auto", style = "opacity: .85",
+                                   top = 225, left = 50, right = "auto", bottom = "auto",
+                                   width = 150, height = "auto", style = "opacity: .65",
                                            
-                                   h2("Crime DC - Last 30 Days"),
+                                   h3("Crime DC - Last 30 Days"), br(), 
+                                   actionButton("resetMap", "Reset Map", style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+                                   br(),
                                    paste("Click on cluster or scroll to zoom-in, Click an individual marker for additional detail popup.")
                     )
           ),

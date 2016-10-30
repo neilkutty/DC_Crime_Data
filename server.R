@@ -29,8 +29,12 @@ library(rgdal)
            Date = as.Date(Date),
            X = as.numeric(gsub("c\\(","",X)),
            Y = as.numeric(gsub("\\)","",Y)))
-           
   dc_crime_clean$DATETIME = as.POSIXct(strptime(dc_crime_clean$REPORTDATETIME, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
+  
+  dc_crime_lite <- dc_crime_clean %>%
+    select(OFFENSE,SHIFT,DATETIME,Date,X,Y,Weekday,BLOCKSITEADDRESS,METHOD)
+           
+ 
   dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
   
 #Shiny server
@@ -38,11 +42,11 @@ function(input, output, session) {
     
     filterData <- reactive({
       if (is.null(input$mymap_bounds))
-      return(dc_crime_clean)
+      return(dc_crime_lite)
       bounds <- input$mymap_bounds
       latRng <- range(bounds$north, bounds$south)
       lngRng <- range(bounds$east, bounds$west)
-      filter(dc_crime_clean, Y >= latRng[1] & Y <= latRng[2] & X >= lngRng[1] & X <= lngRng[2])
+      filter(dc_crime_lite, Y >= latRng[1] & Y <= latRng[2] & X >= lngRng[1] & X <= lngRng[2])
   })
 
   output$plotOffense <-  
@@ -66,9 +70,55 @@ function(input, output, session) {
               panel.grid.minor = element_blank(),
               panel.border = element_blank(),
               panel.background = element_blank()
+              
               )
       
-    })}
+      })}
+
+output$plotSeries <-
+    if(is.null(filterData)){
+      return()
+    }else{
+      renderPlot({
+        ts <- filterData() %>%
+          select(Date) %>%
+          group_by(Date) %>%
+          summarize(count = n())
+        
+        ggplot(ts[-c(nrow(ts),1),], aes(x=Date, y=count, alpha = 0.8))+
+          geom_line()+
+          geom_text(aes(label = ts[-c(nrow(ts),1),]$count), size = 3.5, hjust = .58, color = "black")+
+          ggtitle("Number of Crimes by Day")+
+          guides(alpha=FALSE)+
+          theme(axis.title=element_text(size=10),
+                axis.text.x = element_text(size = 10, angle = 45, hjust = 1))+
+          theme_bw()
+      })
+    }
+  
+    
+output$plotTimeline <-
+  if(is.null(filterData)){
+    return()
+  }else{
+    renderPlot({
+      scat <- filterData() %>%
+        select(OFFENSE, Date) %>%
+        group_by(OFFENSE, Date) %>%
+        summarize(count = n())
+      
+      ggplot(scat, aes(x=Date, y=count, color=OFFENSE))+
+        geom_point()+
+        ggtitle("Number of Crimes by Day by Offense")+
+        scale_fill_brewer("Set2")+
+        theme(axis.title=element_text(size=10),
+              axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              panel.background = element_rect(fill = "white"),
+              strip.background = element_rect(fill = "white"),
+              legend.position = c(.35,.75),
+              legend.background = element_rect(fill=alpha('white', 0.2)))
+    })
+  }
 
   
   output$plotDayTime <-
@@ -87,12 +137,14 @@ function(input, output, session) {
         geom_bar(stat="identity", alpha = 0.75) +
         scale_fill_brewer(palette = 'Set2')+
         scale_y_continuous()+
-#        geom_text(aes(label = dt$count))+
+        ggtitle("Number of Crimes by Day of Week and Time of Day (SHIFT)")+
         facet_grid(.~Weekday)+
         theme(axis.title=element_text(size=10),
               axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
               panel.background = element_rect(fill = "white"),
-              strip.background = element_rect(fill = "white"))
+              strip.background = element_rect(fill = "white"),
+              legend.position = c(.085,.9),
+              legend.background = element_rect(fill=alpha('white', 0.2)))
       })}
       
    output$table1 <- 
@@ -101,11 +153,11 @@ function(input, output, session) {
          select(Weekday, SHIFT, DATETIME, BLOCKSITEADDRESS, OFFENSE, METHOD)
      })
   
-   points <- reactive({
+   points <- eventReactive(input$resetMap,{
      
      cbind(dc_crime_clean$X,dc_crime_clean$Y)
      
-   })
+   }, ignoreNULL = FALSE)
 
    output$mymap <- renderLeaflet({
     
@@ -132,8 +184,7 @@ function(input, output, session) {
                    color = 'blue',
                    fillColor = 'white',
                    weight = 2.0
-                   
-                   )
+                  )
     
   })
 }
