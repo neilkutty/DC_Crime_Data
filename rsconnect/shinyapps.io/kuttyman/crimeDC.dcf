@@ -2,9 +2,9 @@ name: crimeDC
 account: kuttyman
 server: shinyapps.io
 appId: 113630
-bundleId: 600386
+bundleId: 600955
 url: https://kuttyman.shinyapps.io/crimeDC/
-when: 1477795666.77991
+when: 1477882824.86007
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: DC_Crime_Last_30_Days.R|garbage.R|gomap.js|readme.html|readme.rmd

@@ -16,25 +16,20 @@ library(rgdal)
   ## use cbind() combine the list elements and create a dataframe
   dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
   
-  ## Get distinct Offenses for shiny input
-  offenses <- distinct(select(dc_crime_json,OFFENSE))
-  row.names(offenses) <- offenses$OFFENSE
   
   ## Seperate and clean lat/long columns but keep original datetime column
   ## --also separate REPORTDATETIME column
-  dc_crime_clean <- dc_crime_json %>% 
+  dc_crime_lite <- dc_crime_json %>% 
+    select(OFFENSE,SHIFT,REPORTDATETIME,BLOCKSITEADDRESS,METHOD,coordinates) %>%
     separate(coordinates, into = c("X", "Y"), sep = ",")%>%
     separate(REPORTDATETIME, into = c("Date","Time"), sep="T", remove = FALSE)%>%
     mutate(Weekday = weekdays(as.Date(REPORTDATETIME)),
            Date = as.Date(Date),
            X = as.numeric(gsub("c\\(","",X)),
            Y = as.numeric(gsub("\\)","",Y)))
-  dc_crime_clean$DATETIME = as.POSIXct(strptime(dc_crime_clean$REPORTDATETIME, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
   
-  dc_crime_lite <- dc_crime_clean %>%
-    select(OFFENSE,SHIFT,DATETIME,Date,X,Y,Weekday,BLOCKSITEADDRESS,METHOD)
-           
- 
+  dc_crime_lite$DATETIME = as.POSIXct(strptime(dc_crime_lite$REPORTDATETIME, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
+  
   dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
   
 #Shiny server
@@ -155,7 +150,7 @@ output$plotTimeline <-
   
    points <- eventReactive(input$resetMap,{
      
-     cbind(dc_crime_clean$X,dc_crime_clean$Y)
+     cbind(dc_crime_lite$X,dc_crime_lite$Y)
      
    }, ignoreNULL = FALSE)
 
@@ -167,15 +162,15 @@ output$plotTimeline <-
       ) %>%
       addMarkers(data = points(),
                  popup = paste0("<strong>Report Date: </strong>",
-                                dc_crime_clean$DATETIME,
+                                dc_crime_lite$DATETIME,
                                 "<br><strong>Offense: </strong>", 
-                                dc_crime_clean$OFFENSE, 
+                                dc_crime_lite$OFFENSE, 
                                 "<br><strong>method: </strong>", 
-                                dc_crime_clean$METHOD,
+                                dc_crime_lite$METHOD,
                                 "<br><strong>shift: </strong>",
-                                dc_crime_clean$SHIFT,
+                                dc_crime_lite$SHIFT,
                                 "<br><strong>blocksite address: </strong><br>",
-                                dc_crime_clean$BLOCKSITEADDRESS
+                                dc_crime_lite$BLOCKSITEADDRESS
                  ),
                  clusterOptions = markerClusterOptions()
       ) %>%
