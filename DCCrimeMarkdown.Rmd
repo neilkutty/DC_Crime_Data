@@ -1,0 +1,94 @@
+---
+title: "DC Crime Map"
+author: "Neil Kutty"
+date: "May 20, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r GetData, echo=FALSE, eval=TRUE}
+library(ggplot2)
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(jsonlite)
+library(curl)
+library(lubridate)
+library(rgdal)  
+
+## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
+  dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
+  ## use cbind() combine the list elements and create a dataframe
+  dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
+  
+  
+  ## Seperate and clean lat/long columns but keep original datetime column
+  ## --also separate REPORTDATETIME column
+  dc_crime_lite <- dc_crime_json %>% 
+    select(OFFENSE,SHIFT,REPORTDATETIME,BLOCKSITEADDRESS,METHOD,coordinates) %>%
+    separate(coordinates, into = c("X", "Y"), sep = ",")%>%
+    separate(REPORTDATETIME, into = c("Date","Time"), sep="T", remove = FALSE)%>%
+    mutate(Weekday = weekdays(as.Date(REPORTDATETIME)),
+           Date = as.Date(Date),
+           X = as.numeric(gsub("c\\(","",X)),
+           Y = as.numeric(gsub("\\)","",Y)))
+  
+  dc_crime_lite$DATETIME = as.POSIXct(strptime(dc_crime_lite$REPORTDATETIME, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
+  
+  dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
+  
+  off <- as.data.frame(table(dc_crime_lite$OFFENSE))
+      off$Freq <- as.numeric(off$Freq)
+      off$Var1 <- factor(off$Var1)
+      colnames(off) <- c("OFFENSE","COUNT")
+      ggplot(off, aes(x=OFFENSE,y=COUNT)) +
+        geom_bar(stat="identity",alpha = 0.45, fill='red') +
+        ggtitle("Number of Crimes by Offense") +
+        geom_text(aes(label = off$COUNT), size = 3.5, hjust = .58, color = "black")+
+        coord_flip()+
+        scale_x_discrete(label = function(x) lapply(strwrap(x, width = 10, simplify = FALSE), paste, collapse="\n"))+
+        theme(axis.title=element_text(size=10),
+              axis.text.y = element_text(size=10, hjust = 1),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())
+      
+points <-cbind(dc_crime_lite$X,dc_crime_lite$Y)
+      
+leaflet() %>%
+  addProviderTiles("OpenStreetMap.Mapnik",
+                   options = providerTileOptions(noWrap = TRUE)
+  ) %>%
+  addMarkers(data = points(),
+             popup = paste0("<strong>Report Date: </strong>",
+                            dc_crime_lite$DATETIME,
+                            "<br><strong>Offense: </strong>", 
+                            dc_crime_lite$OFFENSE, 
+                            "<br><strong>method: </strong>", 
+                            dc_crime_lite$METHOD,
+                            "<br><strong>shift: </strong>",
+                            dc_crime_lite$SHIFT,
+                            "<br><strong>blocksite address: </strong><br>",
+                            dc_crime_lite$BLOCKSITEADDRESS
+             ),
+             clusterOptions = markerClusterOptions()
+  ) %>%
+  addPolygons(data = dchoods, 
+              fillOpacity = 0.2, 
+              color = 'blue',
+              fillColor = 'white',
+              weight = 2.0
+  )
+
+```
+
