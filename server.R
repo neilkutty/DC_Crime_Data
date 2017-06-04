@@ -18,17 +18,17 @@ library(rgdal)
   
   
   ## Seperate and clean lat/long columns but keep original datetime column
-  ## --also separate REPORTDATETIME column
+  ## --also separate REPORT_DAT column
   dc_crime_lite <- dc_crime_json %>% 
-    select(OFFENSE,SHIFT,REPORTDATETIME,BLOCKSITEADDRESS,METHOD,coordinates) %>%
+    select(OFFENSE,SHIFT,REPORT_DAT,BLOCK,METHOD,coordinates) %>%
     separate(coordinates, into = c("X", "Y"), sep = ",")%>%
-    separate(REPORTDATETIME, into = c("Date","Time"), sep="T", remove = FALSE)%>%
-    mutate(Weekday = weekdays(as.Date(REPORTDATETIME)),
+    separate(REPORT_DAT, into = c("Date","Time"), sep="T", remove = FALSE)%>%
+    mutate(Weekday = weekdays(as.Date(REPORT_DAT)),
            Date = as.Date(Date),
            X = as.numeric(gsub("c\\(","",X)),
            Y = as.numeric(gsub("\\)","",Y)))
   
-  dc_crime_lite$DATETIME = as.POSIXct(strptime(dc_crime_lite$REPORTDATETIME, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
+  dc_crime_lite$DATETIME = as.POSIXct(strptime(dc_crime_lite$REPORT_DAT, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
   
   dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
   
@@ -145,7 +145,7 @@ output$plotTimeline <-
    output$table1 <- 
      renderDataTable(options=list(pageLength=25),{
        filterData()%>%
-         select(Weekday, SHIFT, DATETIME, BLOCKSITEADDRESS, OFFENSE, METHOD)
+         select(Weekday, SHIFT, DATETIME, BLOCK, OFFENSE, METHOD)
      })
   
    points <- eventReactive(input$resetMap,{
@@ -170,7 +170,7 @@ output$plotTimeline <-
                                 "<br><strong>shift: </strong>",
                                 dc_crime_lite$SHIFT,
                                 "<br><strong>blocksite address: </strong><br>",
-                                dc_crime_lite$BLOCKSITEADDRESS
+                                dc_crime_lite$BLOCK
                  ),
                  clusterOptions = markerClusterOptions()
       ) %>%
