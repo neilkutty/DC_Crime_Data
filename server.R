@@ -7,8 +7,7 @@ library(jsonlite)
 library(curl)
 library(lubridate)
 library(rgdal)
-
-
+library(caret)
 
 ########---------------------------------------------------------------------#>>>
   ## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
@@ -32,6 +31,8 @@ library(rgdal)
   
   dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
   
+
+  
 #Shiny server
 function(input, output, session) {
     
@@ -44,6 +45,7 @@ function(input, output, session) {
       filter(dc_crime_lite, Y >= latRng[1] & Y <= latRng[2] & X >= lngRng[1] & X <= lngRng[2])
   })
 
+    
   output$plotOffense <-  
     if(is.null(filterData)){
     return()

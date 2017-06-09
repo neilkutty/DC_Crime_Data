@@ -17,13 +17,12 @@ fluidPage(#theme = shinytheme("cerulean"),
            includeCSS("style.css")
            
           ),
+          br(),
           navbarPage("Crime DC",id='nav',
             tabPanel("Interactive Map",
                      h5('These charts update to reflect data points in the current viewable area of the map. 
                         The Data Explorer tab shows the corresponding rows of the viewable area.'),
-                 
                      
-                       
                      fluidRow(column(7,leafletOutput("mymap", width = '100%', height = '400px')),
                               column(5,plotOutput("plotDayTime"))),
                      
@@ -33,9 +32,6 @@ fluidPage(#theme = shinytheme("cerulean"),
                               column(4,plotOutput("plotTimeline")),
                               column(4,plotOutput("plotSeries"))
                               ),
-                     
-                    
-                      
                      br(),
                      absolutePanel(id = "controls",class = "panel panel-default", fixed = TRUE, draggable = TRUE,
                                    top = 225, left = 50, right = "auto", bottom = "auto",
@@ -46,11 +42,14 @@ fluidPage(#theme = shinytheme("cerulean"),
                                    br(),
                                    paste("Click on cluster or scroll to zoom-in, Click an individual marker for additional detail popup.")
                     )
+                    
           ),
           tabPanel("Data Explorer",
-                   dataTableOutput("table1")
+                   dataTableOutput("table1"))
                    
-          )
+          # ),
+          # tabPanel("Documentation",
+          #          includeHTML("readme.html"))
         ),
         a("data source: http://opendata.dc.gov/datasets",href="http://opendata.dc.gov/datasets"),
         paste(' | '),
@@ -61,5 +60,6 @@ fluidPage(#theme = shinytheme("cerulean"),
         a("github",href="https://github.com/sampsonsimpson/DC_Crime_Data"),
         paste(' | '),
         a("neighborhood boundaries KML file",href="https://www.google.com/maps/d/viewer?mid=1z_3yTY-G8hZZ3z5qh3tM9dBh5ps&hl=en_US")
+
         
 )

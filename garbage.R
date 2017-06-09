@@ -1,3 +1,40 @@
+
+#Train Model
+########---------------------------------------------------------------------#>>>
+## Retrieve the data in JSON format from opendata.dc.gov using fromJson()
+dccrimejsonlite <- fromJSON('http://opendata.dc.gov/datasets/dc3289eab3d2400ea49c154863312434_8.geojson')
+## use cbind() combine the list elements and create a dataframe
+dc_crime_json <- cbind(dccrimejsonlite$features$properties,dccrimejsonlite$features$geometry)
+
+
+## Seperate and clean lat/long columns but keep original datetime column
+## --also separate REPORT_DAT column
+dc_crime_lite <- dc_crime_json %>% 
+  select(OFFENSE,SHIFT,REPORT_DAT,BLOCK,METHOD,coordinates) %>%
+  separate(coordinates, into = c("X", "Y"), sep = ",")%>%
+  separate(REPORT_DAT, into = c("Date","Time"), sep="T", remove = FALSE)%>%
+  mutate(Weekday = weekdays(as.Date(REPORT_DAT)),
+         Date = as.Date(Date),
+         X = as.numeric(gsub("c\\(","",X)),
+         Y = as.numeric(gsub("\\)","",Y)))
+
+dc_crime_lite$DATETIME = as.POSIXct(strptime(dc_crime_lite$REPORT_DAT, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
+
+dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
+
+
+dcCrimeML <- dc_crime_lite
+dcCrimeML[] <- sapply(dc_crime_lite, function(x) as.numeric(as.factor(x)))
+tr <- createDataPartition(dcCrimeML$Weekday, p=0.7, list = F)
+train <- dcCrimeML[tr,]
+test <- dcCrimeML[-tr,]
+model_glm <- train(Weekday ~ ., data = train, method="glm")
+glm_results <- predict(model_glm, test)
+glm_results$overall[1]
+
+
+#---------------------------------------------------------------------------------####
+
 library(rgdal)
 
 dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
