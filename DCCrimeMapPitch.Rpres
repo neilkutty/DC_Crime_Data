@@ -1,7 +1,7 @@
 DC Crime Map - Pitch - Developing Data Products Week 4
 ========================================================
 author: Neil Kutty
-date: June 5, 2017
+date: June 12, 2017
 autosize: true
 
 Why is a DC Crime Map Useful?
@@ -9,17 +9,17 @@ Why is a DC Crime Map Useful?
 ### The Usefulness of Summary Stats with a Map View.
 <br>
 
-  + This map allows for the user to not only see clusters of recent crimes in the city, but they also get updatable set of summary statistics for the viewable area of the map. 
++ This map allows for the user to not only see clusters of recent crimes in the city, but they also get updatable set of summary statistics for the viewable area of the map.
 
-  + The user gets access to the underlying table for all map points & charts.  
++ Getting instant visual statistics for basic counts for the viewable area of the map allows a user to instantly retrieve additional insight while exploring the map.
 
-  + This 
++ The user gets access to the underlying table for all map points and charts, and the data explorer tab also filters to show only the viewable area; therefore, driving down to detail of what the user is looking at is as easy as going to the data explorer tab.
 
 
 
 Getting and Cleaning the dataset
 ========================================================
-
+<font size=4>
 ```{r cleandata, eval=TRUE, echo=TRUE}
 library(dplyr)
 library(tidyr)
@@ -45,6 +45,12 @@ library(leaflet)
            X = as.numeric(gsub("c\\(","",X)),
            Y = as.numeric(gsub("\\)","",Y)))
 
+```
+</font>
+***
+Cleaned Data
+```{r CleanDataShow, echo=T, eval=T}
+head(dc_crime_clean)
 ```
 
 Rendered Leaflet Map
@@ -96,3 +102,12 @@ leaflet() %>%
   ) 
   
 ```
+
+Conclusion: A Crime Map with Summary Stats
+===
+
+Why is a Crime Map with Summary Stats useful?. Pitch Summary:
+
++ Immediately visualizing the summary stats of a viewable area allows the user to get on-demand insight summary statistics while exploring the map.
+
++ The underlying data is always a click away on the Data Explorer tab and filters for the viewable area of the map.

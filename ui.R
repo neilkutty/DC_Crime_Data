@@ -1,10 +1,4 @@
-#August 29th, 2016 --
-# >Make the markers individual by offense --group differently for the second chart 
-# > See if any significance in difference in time stamp vars 
-# > Add inputSelect for crime. (contingency for all selected > plot generated(no need for OFFENSE plot alone))
-# > If crime involved weapon (METHOD) then give stats on that (up or down over last 30 days, etc)
-# > add time slider input with vector to make it inclusive.  Set a button to control
-# > needed timeframes.
+
 #
 
 library(shiny)
@@ -18,6 +12,13 @@ fluidPage(#theme = shinytheme("cerulean"),
           br(),
           navbarPage("Crime DC",id='nav',
             tabPanel("Interactive Map",
+                     h2("Shiny App Rendering a Leaflet Map with Summary Charts"),
+                     h2("author: Neil Kutty"),
+                     h2("date: June 12, 2017"),
+                     h2("Developing Data Products - Course Project"),
+                     br(),
+                     hr(),
+                     br(),
                      h3('Documentation for User (scroll down for Shiny App)'),
                      h4('These charts update to reflect data points in the current viewable area of the map. 
                         The Data Explorer tab shows the corresponding rows of the viewable area.'),
@@ -48,6 +49,12 @@ fluidPage(#theme = shinytheme("cerulean"),
                      h5("note: the option for `clusterOptions` is set equal to `markerClusterOptions()` enabling leaflet's clustering of map points."),
                      h5("In order to expand clusters, you can zoom in or click on the cluster to expand the viewable area.  The summary charts will always update in order to reflect the data in the viewable area of the map."),
                      h5("Click the data explorer tab in order to see summary rows of the viewable map area incident points."),
+                     h5("Click the blue 'Reset Map' button on the draggable (floating) tab panel to reset the viewable area of the map."),
+                     hr(),
+                     br(),
+                     h4("Shiny App"),
+                     h5("note: May take few seconds to render"),
+                     
                      
                      fluidRow(column(7,leafletOutput("mymap", width = '100%', height = '400px')),
                               column(5,plotOutput("plotDayTime"))),
@@ -60,11 +67,11 @@ fluidPage(#theme = shinytheme("cerulean"),
                               ),
                      br(),
                      absolutePanel(id = "controls",class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                                   top = 350, left = "auto", right = 50, bottom = "auto",
-                                   width = 220, height = "auto", style = "opacity: .65",
+                                   top = 150, left = "auto", right = 50, bottom = "auto",
+                                   width = 220, height = "auto", style = "opacity: .78",
                                            
                                    h4("Crime DC - Last 30 Days"), br(), 
-                                   h5("This Panel is Draggable.."),
+                                   h4("This Panel is Draggable.."),
                                    actionButton("resetMap", "Reset Map", style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                    br(),
                                    paste("Click on cluster or scroll to zoom-in, Click an individual marker for additional detail popup.")

@@ -1,12 +1,12 @@
-
+library(jsonlite)
 library(ggplot2)
 library(leaflet)
 library(dplyr)
 library(tidyr)
-library(jsonlite)
+
 library(curl)
 library(lubridate)
-library(rgdal)
+#library(rgdal)
 library(caret)
 
 ########---------------------------------------------------------------------#>>>
@@ -29,7 +29,7 @@ library(caret)
   
   dc_crime_lite$DATETIME = as.POSIXct(strptime(dc_crime_lite$REPORT_DAT, tz = "UTC", "%Y-%m-%dT%H:%M:%OSZ"))  
   
-  dchoods <- readOGR("dchoods.kml", "DC neighborhood boundaries")
+  
   
 
   
@@ -175,13 +175,7 @@ output$plotTimeline <-
                                 dc_crime_lite$BLOCK
                  ),
                  clusterOptions = markerClusterOptions()
-      ) %>%
-       addPolygons(data = dchoods, 
-                   fillOpacity = 0.2, 
-                   color = 'blue',
-                   fillColor = 'white',
-                   weight = 2.0
-                  )
+      ) 
     
   })
 }
