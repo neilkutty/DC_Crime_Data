@@ -13,15 +13,41 @@ library(leaflet)
 
 fluidPage(#theme = shinytheme("cerulean"),
           tags$head(
-            # Include our custom CSS
-           includeCSS("style.css")
-           
-          ),
+          # Include our custom CSS
+          includeCSS("style.css")),
           br(),
           navbarPage("Crime DC",id='nav',
             tabPanel("Interactive Map",
-                     h5('These charts update to reflect data points in the current viewable area of the map. 
+                     h3('Documentation for User (scroll down for Shiny App)'),
+                     h4('These charts update to reflect data points in the current viewable area of the map. 
                         The Data Explorer tab shows the corresponding rows of the viewable area.'),
+                     h5("This Shiny Application creates a leaflet map showing the last 30 days of Crime incidents in Washington, D.C."),
+                     h5("data: DC Crime - Last 30 Days [Open Data DC](http://opendata.dc.gov/datasets)"),
+                     h4("1st Step: Load needed libraries."),
+                     h5("+ `dplyr` for distinct(), select(), and mutate() functions."),
+                     h5("+ `tidyr` for the separate() function."),
+                     h5("+ `jsonlite` for the fromJSON() function needed to retrieve our dataset via the GeoJSON api."),
+                     h5("+ `lubridate` for ymd_hms() function to clean datetime column."),
+                     h5("+ `leaflet` to create our map."),
+                     br(),
+                     h4("2nd Step: Create Mappable Dataframe"),
+                     h5("Our data comes in a `GeoJSON` format. "),
+                     h5("The `jsonlite::fromJSON()` function retrieves the from the collection format it exists in and stores it in list format in the variable defined `dccrimejsonlite`."),
+                     h5("Using the `cbind` function, we combine these two lists into a dataframe defined as `dc_crime_json`.  Our next step is to clean the data and return a usable dataframe."),
+                     h5("We access the list elements which are nested within the `features` level, and then combine these two large lists:"),
+                     h5("- `properties` list which contain the main table elements for the dataset. "),
+                     h5("- `geometry` list which contains the **latitude** and **longitude** columns which we will need to map the data. "),
+                     br(),
+                     h4("3rd Step: Render the Map"),
+                     h5("First, we define a `points` element with the latitude and longitude vectors corresponding to the dataframe. This is used to pass the Latitude and Longitude columns to the leaflet map: see below where `addMarkers(data = points ...`."),
+                     h5("Rendering a map with leaflet is as easy as calling the `leaflet()` function.  Using chain operation, we simply add elements to our map after calling it."),
+                     br(),
+                     hr(),
+                     br(),
+                     h4("Using the Shiny App"),
+                     h5("note: the option for `clusterOptions` is set equal to `markerClusterOptions()` enabling leaflet's clustering of map points."),
+                     h5("In order to expand clusters, you can zoom in or click on the cluster to expand the viewable area.  The summary charts will always update in order to reflect the data in the viewable area of the map."),
+                     h5("Click the data explorer tab in order to see summary rows of the viewable map area incident points."),
                      
                      fluidRow(column(7,leafletOutput("mymap", width = '100%', height = '400px')),
                               column(5,plotOutput("plotDayTime"))),
@@ -34,10 +60,11 @@ fluidPage(#theme = shinytheme("cerulean"),
                               ),
                      br(),
                      absolutePanel(id = "controls",class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                                   top = 225, left = 50, right = "auto", bottom = "auto",
-                                   width = 150, height = "auto", style = "opacity: .65",
+                                   top = 350, left = "auto", right = 50, bottom = "auto",
+                                   width = 220, height = "auto", style = "opacity: .65",
                                            
-                                   h3("Crime DC - Last 30 Days"), br(), 
+                                   h4("Crime DC - Last 30 Days"), br(), 
+                                   h5("This Panel is Draggable.."),
                                    actionButton("resetMap", "Reset Map", style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                    br(),
                                    paste("Click on cluster or scroll to zoom-in, Click an individual marker for additional detail popup.")
