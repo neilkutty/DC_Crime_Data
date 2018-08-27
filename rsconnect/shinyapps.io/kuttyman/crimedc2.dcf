@@ -1,13 +1,13 @@
-name: crimedc
-title: DC_Crime_Data
+name: crimedc2
+title: crimeDC
 username:
 account: kuttyman
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 113630
-bundleId: 1497641
-url: https://kuttyman.shinyapps.io/crimeDC/
-when: 1532457365.34431
+appId: 387180
+bundleId: 1497714
+url: https://kuttyman.shinyapps.io/crimedc2/
+when: 1532460403.33498
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: .Rapp.history|.RData|DC_Crime_Last_30_Days.R|DCCrimeMapPitch-rpubs.html|DCCrimeMapPitch.html|DCCrimeMapPitch.md|DCCrimeMapPitch.Rpres|DCCrimeMarkdown.html|DCCrimeMarkdown.Rmd|dchoods.kml|DevDataProdW2.html|DevDataProdW2.Rmd|garbage.R|gomap.js|readme.html|readme.rmd|readme<legacy>.Rmd|DCCrimeMapPitch-figure/map-1.png|DCCrimeMapPitch-figure/mapRender-1.png|DCCrimeMapPitch-figure/unnamed-chunk-1-1.png|DCCrimeMapPitch-figure/unnamed-chunk-2-1.png|shine/server.R|shine/ui.R
